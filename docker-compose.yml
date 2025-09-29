@@ -9,7 +9,13 @@ services:
     environment:
       MONGO_INITDB_DATABASE: experiments
     volumes:
-      - mongo_data:/data/db
+      - ./data/mongodb:/data/db  # host folder persists data
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   web:
     build:
@@ -20,13 +26,10 @@ services:
     env_file:
       - .env
     environment:
-      # Fallbacks if .env is missing
       MONGO_URI: mongodb://mongo:27017
       MONGO_DB: experiments
       MONGO_COLLECTION: submissions
       PYRAMID_RELOAD: "false"
     depends_on:
       - mongo
-
-volumes:
-  mongo_data:
+    restart: unless-stopped
