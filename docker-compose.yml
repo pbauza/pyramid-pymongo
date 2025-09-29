@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: pyramid_mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: experiments
+    volumes:
+      - mongo_data:/data/db
+
+  web:
+    build:
+      context: ./web
+    container_name: pyramid_web
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Fallbacks if .env is missing
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: experiments
+      MONGO_COLLECTION: submissions
+      PYRAMID_RELOAD: "false"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
