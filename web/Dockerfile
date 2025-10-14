@@ -7,7 +7,8 @@ WORKDIR /app
 # Install system deps (optional but nice to have for pip wheels)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-  && rm -rf /var/lib/apt/lists/*
+    sudo apt install nginx php-fpm \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python requirements
 COPY requirements.txt .
@@ -21,3 +22,4 @@ EXPOSE 8000
 
 # Run with Waitress
 CMD ["python", "-m", "app.__main__"]
+
