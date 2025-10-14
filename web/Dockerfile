@@ -9,20 +9,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Working directory
 WORKDIR /app
 
-# Python dependencies
-COPY requirements.txt .
+# Copy Python dependencies (from web/)
+COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app/..
+# Copy Pyramid application (from web/)
+COPY web/app ./app
 
-# Application code
-COPY app/ ./app
-
-# Nginx + Supervisor configs
+# Copy Nginx and Supervisor configs (from project root)
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# provide a PHP root (for /auth)
+# Copy PHP application (from project root)
 COPY php/ /var/www/
 
 # Redirect nginx logs to Docker stdout/stderr
