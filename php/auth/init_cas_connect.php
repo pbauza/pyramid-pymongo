@@ -12,8 +12,10 @@ phpCAS::setDebug();
 // Enable verbose error messages. Disable in production!
 phpCAS::setVerbose(true);
 
+$serviceBaseUrl = $scheme . '://' . $host;  // e.g., http://neas.uab.cat:8443
+
 // Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, true);
+phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $serviceBaseUrl);
 
 // For production use set the CA certificate that is the issuer of the cert
 // on the CAS server and uncomment the line below
