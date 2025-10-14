@@ -1,0 +1,3 @@
+[submodule "php/auth/CAS"]
+	path = php/auth/CAS
+	url = https://github.com/apereo/phpCAS.git
