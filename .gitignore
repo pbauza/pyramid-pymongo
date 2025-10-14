@@ -1,2 +1,4 @@
 data/mongodb/*
 !data/mongodb/.gitkeep
+keys/*
+!keys/.gitkeep
