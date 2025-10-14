@@ -19,7 +19,8 @@ services:
 
   web:
     build:
-      context: ./web
+      context: .
+      dockerfile: web/Dockerfile
     container_name: pyramid_web
     ports:
       - "8000:8000"
