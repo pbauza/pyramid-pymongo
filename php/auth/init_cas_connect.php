@@ -1,11 +1,11 @@
 <?php
 
-require_once __DIR__.'/../funcions.php';
+require_once __DIR__.'/funcions.php';
 // Load the settings from the central config file
-require_once __DIR__.'/../config.php';
+require_once __DIR__.'/config.php';
 
 // Load the CAS lib
-require_once __DIR__.'/../CAS/CAS.php';
+require_once __DIR__.'/CAS/CAS.php';
 
 // Enable debugging
 phpCAS::setDebug();
