@@ -12,7 +12,7 @@ phpCAS::setDebug();
 // Enable verbose error messages. Disable in production!
 phpCAS::setVerbose(true);
 
-$serviceBaseUrl = $scheme . '://' . $host;  // e.g., http://neas.uab.cat:8443
+$serviceBaseUrl = 'https://neas.uab.cat:8443';
 
 // Initialize phpCAS
 phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $serviceBaseUrl);
