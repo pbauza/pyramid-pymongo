@@ -10,6 +10,8 @@ services:
       MONGO_INITDB_DATABASE: experiments
     volumes:
       - ./data/mongodb:/data/db  # host folder persists data
+      - ./keys:/etc/keys:ro
+
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
