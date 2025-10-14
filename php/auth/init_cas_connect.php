@@ -13,7 +13,7 @@ phpCAS::setDebug();
 phpCAS::setVerbose(true);
 
 // Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, true);
 
 // For production use set the CA certificate that is the issuer of the cert
 // on the CAS server and uncomment the line below
