@@ -17,6 +17,7 @@ def main(global_config=None, **settings):
 
     config = Configurator(settings=settings)
     config.include("pyramid_jinja2")  # Enable Jinja2 templating
+    config.add_tween("app.pyramid_auth.auth_tween_factory", over="EXCVIEW")
 
     # Routes
     config.add_route("home", "/")
