@@ -1,8 +1,8 @@
-version: "3.9"
-
 services:
   mongo:
-    image: mongo:7
+    image: mongo:4.2.1
+    user: 2000:1001
+    restart: always
     container_name: pyramid_mongo
     ports:
       - "27017:27017"
@@ -15,8 +15,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
-
   web:
     build:
       context: .
