@@ -24,7 +24,8 @@ $phpcas_path = 'CAS';
 ///////////////////////////////////////
 
 // Full Hostname of your CAS Server
-$cas_host = 'sso.uab.cat';
+//$cas_host = 'sso.uab.cat';
+$cas_host = 'ssot.uab.cat';
 
 // Context of the CAS Server
 $cas_context = '/cas';
