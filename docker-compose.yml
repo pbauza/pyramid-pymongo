@@ -29,3 +29,5 @@ services:
     depends_on:
       - mongo
     restart: unless-stopped
+volumes:
+  mongo-data:
