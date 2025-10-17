@@ -1,7 +1,7 @@
 services:
   mongo:
     image: mongo:4.2.1
-    user: 2000:1001
+    user: 1000:1000
     restart: always
     container_name: pyramid_mongo
     ports:
