@@ -9,7 +9,7 @@ services:
     environment:
       MONGO_INITDB_DATABASE: experiments
     volumes:
-      - ./data/mongodb:/data/db  # host folder persists data
+      - ./database/:/data/db  # host folder persists data
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
