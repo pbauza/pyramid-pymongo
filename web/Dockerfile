@@ -27,9 +27,6 @@ COPY php/ /var/www/
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
  && ln -sf /dev/stderr /var/log/nginx/error.log
 
- # Install Certbot for SSL
-RUN certbot --nginx
-
 # Expose only 8443 (nginx)
 EXPOSE 8443
 
