@@ -25,7 +25,7 @@ phpCAS::setLogger();
 phpCAS::setVerbose(true);
 
 // Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
 
 // For production use set the CA certificate that is the issuer of the cert
 // on the CAS server and uncomment the line below
@@ -60,21 +60,5 @@ phpCAS::forceAuthentication();
     <?php require 'script_info.php' ?>
     <p>the user's login is <b><?php echo phpCAS::getUser(); ?></b>.</p>
     <p>phpCAS version is <b><?php echo phpCAS::getVersion(); ?></b>.</p>
-<h3>User Attributes</h3>
-<ul>
-<?php
-foreach (phpCAS::getAttributes() as $key => $value) {
-    if (is_array($value)) {
-        echo '<li>', $key, ':<ol>';
-        foreach ($value as $item) {
-            echo '<li><strong>', $item, '</strong></li>';
-        }
-        echo '</ol></li>';
-    } else {
-        echo '<li>', $key, ': <strong>', $value, '</strong></li>' . PHP_EOL;
-    }
-}
-    ?>
-</ul> 
   </body>
 </html>

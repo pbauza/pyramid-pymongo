@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  Example for handling logout requests
+ *  Example for a proxy with session usage
  *
  * PHP Version 7
  *
- * @file     example_logout.php
+ * @file     example_proxy_serviceWeb_chaining.php
  * @category Authentication
  * @package  PhpCAS
  * @author   Joachim Fritschi <jfritschi@freenet.de>
@@ -25,7 +25,7 @@ phpCAS::setLogger();
 phpCAS::setVerbose(true);
 
 // Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+phpCAS::proxy(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
 
 // For production use set the CA certificate that is the issuer of the cert
 // on the CAS server and uncomment the line below
@@ -36,45 +36,36 @@ phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_serv
 // VALIDATING THE CAS SERVER IS CRUCIAL TO THE SECURITY OF THE CAS PROTOCOL!
 phpCAS::setNoCasServerValidation();
 
-// handle incoming logout requests
-phpCAS::handleLogoutRequests();
-
-// Or as an advanced featue handle SAML logout requests that emanate from the
-// CAS host exclusively.
-// Failure to restrict SAML logout requests to authorized hosts could
-// allow denial of service attacks where at the least the server is
-// tied up parsing bogus XML messages.
-// phpCAS::handleLogoutRequests(true, $cas_real_hosts);
-
 // force CAS authentication
 phpCAS::forceAuthentication();
 
-// for this test, simply print that the authentication was successfull
+// at this step, the user has been authenticated by the CAS server
+// and the user's login name can be read with phpCAS::getUser().
+
+// moreover, a PGT was retrieved from the CAS server that will
+// permit to gain accesses to new services.
+
 ?>
 <html>
   <head>
-    <title>phpCAS simple client</title>
+    <title>phpCAS proxy example #2</title>
+    <link rel="stylesheet" type='text/css' href='example.css'/>
   </head>
   <body>
-    <h1>Successfull Authentication!</h1>
+    <h1>phpCAS proxied proxy example</h1>
     <?php require 'script_info.php' ?>
     <p>the user's login is <b><?php echo phpCAS::getUser(); ?></b>.</p>
-    <p>phpCAS version is <b><?php echo phpCAS::getVersion(); ?></b>.</p>
-<h3>User Attributes</h3>
-<ul>
+    <h2>Response from service <?php echo $serviceUrl2; ?></h2>
 <?php
-foreach (phpCAS::getAttributes() as $key => $value) {
-    if (is_array($value)) {
-        echo '<li>', $key, ':<ol>';
-        foreach ($value as $item) {
-            echo '<li><strong>', $item, '</strong></li>';
-        }
-        echo '</ol></li>';
-    } else {
-        echo '<li>', $key, ': <strong>', $value, '</strong></li>' . PHP_EOL;
-    }
+flush();
+// call a service and change the color depending on the result
+if (phpCAS::serviceWeb($serviceUrl2, $err_code, $output)) {
+    echo '<div class="success">';
+} else {
+    echo '<div class="error">';
 }
-    ?>
-</ul> 
+echo $output;
+echo '</div>';
+                                                              ?>
   </body>
 </html>

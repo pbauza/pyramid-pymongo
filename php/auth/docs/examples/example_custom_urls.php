@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  Example for handling logout requests
+ * Example for overriding validation urls
  *
  * PHP Version 7
  *
- * @file     example_logout.php
+ * @file     example_custom_urls.php
  * @category Authentication
  * @package  PhpCAS
  * @author   Joachim Fritschi <jfritschi@freenet.de>
@@ -25,7 +25,7 @@ phpCAS::setLogger();
 phpCAS::setVerbose(true);
 
 // Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
 
 // For production use set the CA certificate that is the issuer of the cert
 // on the CAS server and uncomment the line below
@@ -36,18 +36,25 @@ phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_serv
 // VALIDATING THE CAS SERVER IS CRUCIAL TO THE SECURITY OF THE CAS PROTOCOL!
 phpCAS::setNoCasServerValidation();
 
-// handle incoming logout requests
-phpCAS::handleLogoutRequests();
-
-// Or as an advanced featue handle SAML logout requests that emanate from the
-// CAS host exclusively.
-// Failure to restrict SAML logout requests to authorized hosts could
-// allow denial of service attacks where at the least the server is
-// tied up parsing bogus XML messages.
-// phpCAS::handleLogoutRequests(true, $cas_real_hosts);
+// Override the proxy validation url for any (ST and PT) any CAS 1.0, 2.0 and 3.0 validation
+// Example of the URL for the version of CAS 2.0 validation
+phpCAS::setServerProxyValidateURL('https://cas.example.org:1443/proxyValidate');
+// Override the validation url for any CAS 1.0, 2.0 and 3.0 validation
+// Example of the URL for the version of CAS 2.0 validation
+//phpCAS::setServerServiceValidateURL('https://cas.example.org:1443/serviceValidate');
+//Override the validation url for any SAML11 validation
+//phpCAS::setServerSamlValidateURL('https://cas.example.org:1443/samlValidate');
 
 // force CAS authentication
 phpCAS::forceAuthentication();
+
+// at this step, the user has been authenticated by the CAS server
+// and the user's login name can be read with phpCAS::getUser().
+
+// logout if desired
+if (isset($_REQUEST['logout'])) {
+    phpCAS::logout();
+}
 
 // for this test, simply print that the authentication was successfull
 ?>
@@ -60,21 +67,6 @@ phpCAS::forceAuthentication();
     <?php require 'script_info.php' ?>
     <p>the user's login is <b><?php echo phpCAS::getUser(); ?></b>.</p>
     <p>phpCAS version is <b><?php echo phpCAS::getVersion(); ?></b>.</p>
-<h3>User Attributes</h3>
-<ul>
-<?php
-foreach (phpCAS::getAttributes() as $key => $value) {
-    if (is_array($value)) {
-        echo '<li>', $key, ':<ol>';
-        foreach ($value as $item) {
-            echo '<li><strong>', $item, '</strong></li>';
-        }
-        echo '</ol></li>';
-    } else {
-        echo '<li>', $key, ': <strong>', $value, '</strong></li>' . PHP_EOL;
-    }
-}
-    ?>
-</ul> 
+    <p><a href="?logout=">Logout</a></p>
   </body>
 </html>

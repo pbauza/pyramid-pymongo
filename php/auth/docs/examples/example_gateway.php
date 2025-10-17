@@ -1,11 +1,11 @@
 <?php
 
 /**
- *  Example for handling logout requests
+ * Example that uses the CAS gateway feature
  *
  * PHP Version 7
  *
- * @file     example_logout.php
+ * @file     example_gateway.php
  * @category Authentication
  * @package  PhpCAS
  * @author   Joachim Fritschi <jfritschi@freenet.de>
@@ -25,7 +25,7 @@ phpCAS::setLogger();
 phpCAS::setVerbose(true);
 
 // Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
 
 // For production use set the CA certificate that is the issuer of the cert
 // on the CAS server and uncomment the line below
@@ -36,45 +36,36 @@ phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_serv
 // VALIDATING THE CAS SERVER IS CRUCIAL TO THE SECURITY OF THE CAS PROTOCOL!
 phpCAS::setNoCasServerValidation();
 
-// handle incoming logout requests
-phpCAS::handleLogoutRequests();
+if (isset($_REQUEST['logout'])) {
+    phpCAS::logout();
+}
+if (isset($_REQUEST['login'])) {
+    phpCAS::forceAuthentication();
+}
 
-// Or as an advanced featue handle SAML logout requests that emanate from the
-// CAS host exclusively.
-// Failure to restrict SAML logout requests to authorized hosts could
-// allow denial of service attacks where at the least the server is
-// tied up parsing bogus XML messages.
-// phpCAS::handleLogoutRequests(true, $cas_real_hosts);
+// check CAS authentication
+$auth = phpCAS::checkAuthentication();
 
-// force CAS authentication
-phpCAS::forceAuthentication();
-
-// for this test, simply print that the authentication was successfull
 ?>
 <html>
   <head>
     <title>phpCAS simple client</title>
   </head>
   <body>
-    <h1>Successfull Authentication!</h1>
-    <?php require 'script_info.php' ?>
-    <p>the user's login is <b><?php echo phpCAS::getUser(); ?></b>.</p>
-    <p>phpCAS version is <b><?php echo phpCAS::getVersion(); ?></b>.</p>
-<h3>User Attributes</h3>
-<ul>
 <?php
-foreach (phpCAS::getAttributes() as $key => $value) {
-    if (is_array($value)) {
-        echo '<li>', $key, ':<ol>';
-        foreach ($value as $item) {
-            echo '<li><strong>', $item, '</strong></li>';
-        }
-        echo '</ol></li>';
-    } else {
-        echo '<li>', $key, ': <strong>', $value, '</strong></li>' . PHP_EOL;
-    }
+if ($auth) {
+    // for this test, simply print that the authentication was successfull
+        ?>
+    <h1>Successfull Authentication!</h1>
+    <?php include 'script_info.php' ?>
+    <p>the user's login is <b><?php echo phpCAS::getUser(); ?></b>.</p>
+    <p><a href="?logout=">Logout</a></p><?php
+} else {
+                                        ?>
+    <h1>Guest mode</h1>
+    <p><a href="?login=">Login</a></p><?php
 }
-    ?>
-</ul> 
+                                      ?>
+    <p>phpCAS version is <b><?php echo phpCAS::getVersion(); ?></b>.</p>
   </body>
 </html>
