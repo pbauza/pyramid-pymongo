@@ -44,7 +44,7 @@ $cas_server_ca_cert_path = '/path/to/cachain.pem';
 $cas_real_hosts = array('cas-real-1.example.com', 'cas-real-2.example.com');
 
 // Client config for the required domain name, should be protocol, hostname and port
-$client_service_name = 'https://neas.uab.cat:8443';
+$client_service_name = 'https://neas.uab.cat';
 
 // Client config for cookie hardening
 $client_domain = '127.0.0.1';
