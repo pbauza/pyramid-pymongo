@@ -1,82 +1,90 @@
 <?php
+declare(strict_types=1);
+session_start();
 
-/**
- *  Example for handling logout requests
- *
- * PHP Version 7
- *
- * @file     example_logout.php
- * @category Authentication
- * @package  PhpCAS
- * @author   Joachim Fritschi <jfritschi@freenet.de>
- * @author   Adam Franco <afranco@middlebury.edu>
- * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2.0
- * @link     https://wiki.jasig.org/display/CASC/phpCAS
- */
-
-// Load the settings from the central config file
-require_once 'config.php';
-// Load the CAS lib
+// ---- Load config + CAS ----
+require_once __DIR__ . '/config.php';
 require_once $phpcas_path . '/CAS.php';
 
-// Enable debugging
-phpCAS::setLogger();
-// Enable verbose error messages. Disable in production!
-phpCAS::setVerbose(true);
+// Service URL base (no trailing slash)
+$client_service_name = $client_service_name ?? 'https://neas.uab.cat:8443';
 
-// Initialize phpCAS
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+// Initialize phpCAS client (this phpCAS needs service base url)
+phpCAS::client(
+    CAS_VERSION_3_0,
+    $cas_host,
+    (int)$cas_port,
+    $cas_context,
+    $client_service_name,
+    true // changeSessionID
+);
 
-// For production use set the CA certificate that is the issuer of the cert
-// on the CAS server and uncomment the line below
-// phpCAS::setCasServerCACert($cas_server_ca_cert_path);
-
+// IMPORTANT: fix the service URL to the root (or to /auth/ if you prefer)
 phpCAS::setFixedServiceURL($client_service_name . '/');
 
-// For quick testing you can disable SSL validation of the CAS server.
-// THIS SETTING IS NOT RECOMMENDED FOR PRODUCTION.
-// VALIDATING THE CAS SERVER IS CRUCIAL TO THE SECURITY OF THE CAS PROTOCOL!
-phpCAS::setNoCasServerValidation();
+// In production: validate CAS server certificate
+// phpCAS::setCasServerCACert('/etc/ssl/certs/geant-ca.pem');
+phpCAS::setNoCasServerValidation(); // dev only
 
-// handle incoming logout requests
+// Support CAS single logout if you use it
 phpCAS::handleLogoutRequests();
 
-// Or as an advanced featue handle SAML logout requests that emanate from the
-// CAS host exclusively.
-// Failure to restrict SAML logout requests to authorized hosts could
-// allow denial of service attacks where at the least the server is
-// tied up parsing bogus XML messages.
-// phpCAS::handleLogoutRequests(true, $cas_real_hosts);
-
-// force CAS authentication
+// Force authentication (redirects to CAS if needed)
 phpCAS::forceAuthentication();
 
-// for this test, simply print that the authentication was successfull
-?>
-<html>
-  <head>
-    <title>phpCAS simple client</title>
-  </head>
-  <body>
-    <h1>Successfull Authentication!</h1>
-    <?php require 'script_info.php' ?>
-    <p>the user's login is <b><?php echo phpCAS::getUser(); ?></b>.</p>
-    <p>phpCAS version is <b><?php echo phpCAS::getVersion(); ?></b>.</p>
-<h3>User Attributes</h3>
-<ul>
-<?php
-foreach (phpCAS::getAttributes() as $key => $value) {
-    if (is_array($value)) {
-        echo '<li>', $key, ':<ol>';
-        foreach ($value as $item) {
-            echo '<li><strong>', $item, '</strong></li>';
-        }
-        echo '</ol></li>';
-    } else {
-        echo '<li>', $key, ': <strong>', $value, '</strong></li>' . PHP_EOL;
-    }
+// ---- Authenticated here ----
+$niu = phpCAS::getUser();
+$_SESSION['niu'] = $niu;
+
+// ---- Build and set a JWT cookie (RS256) ----
+function base64url_encode(string $data): string {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
 }
-    ?>
-</ul> 
-  </body>
-</html>
+
+$now = time();
+$payload = [
+    'iss' => 'neas.uab.cat',       // issuer
+    'aud' => 'pyramid-app',        // audience (optional, but nice to have)
+    'iat' => $now,
+    'nbf' => $now,
+    'exp' => $now + 3600,          // 1 hour
+    'sub' => $niu,                 // << the NIU goes here
+];
+
+$header = ['alg' => 'RS256', 'typ' => 'JWT'];
+
+$jwt_header  = base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
+$jwt_payload = base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
+$signing_input = $jwt_header . '.' . $jwt_payload;
+
+// Load private key (mounted read-only in the container)
+$private_key_path = '/etc/keys/jwt-private.pem';
+$private_key = openssl_pkey_get_private('file://' . $private_key_path);
+if ($private_key === false) {
+    http_response_code(500);
+    echo "Cannot load private key.";
+    exit;
+}
+
+$signature = '';
+if (!openssl_sign($signing_input, $signature, $private_key, OPENSSL_ALGO_SHA256)) {
+    http_response_code(500);
+    echo "Cannot sign JWT.";
+    exit;
+}
+openssl_free_key($private_key);
+
+$jwt = $signing_input . '.' . base64url_encode($signature);
+
+// Send cookie (secure, httpOnly, sameSite=Lax)
+setcookie('session_jwt', $jwt, [
+    'expires'  => $now + 3600,
+    'path'     => '/',
+    'secure'   => true,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
+// ---- Redirect to Pyramid app ----
+header('Location: /app/', true, 302);
+exit;
