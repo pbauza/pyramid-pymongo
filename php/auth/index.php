@@ -31,10 +31,12 @@ phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_serv
 // on the CAS server and uncomment the line below
 // phpCAS::setCasServerCACert($cas_server_ca_cert_path);
 
+phpCAS::setFixedServiceURL($serviceBaseUrl . '/');
+
 // For quick testing you can disable SSL validation of the CAS server.
 // THIS SETTING IS NOT RECOMMENDED FOR PRODUCTION.
 // VALIDATING THE CAS SERVER IS CRUCIAL TO THE SECURITY OF THE CAS PROTOCOL!
-phpCAS::setNoCasServerValidation();
+//phpCAS::setNoCasServerValidation();
 
 // handle incoming logout requests
 phpCAS::handleLogoutRequests();
