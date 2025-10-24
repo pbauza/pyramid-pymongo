@@ -2,7 +2,6 @@
 import os
 import jwt
 import logging
-from pyramid.interfaces import IRequest
 from pyramid.security import Authenticated
 from pyramid.request import Request
 
@@ -17,7 +16,7 @@ with open(PUBLIC_KEY_PATH, "rb") as f:
 
 def auth_tween_factory(handler, registry):
     def auth_tween(request: Request):
-        user_id = None
+        niu = None
         token = request.cookies.get(COOKIE_NAME)
 
         if token:
@@ -29,19 +28,20 @@ def auth_tween_factory(handler, registry):
                     audience="pyramid-app",  # must match PHP 'aud'
                     options={"require": ["sub", "exp", "iat"]}
                 )
-                user_id = claims.get("sub")
-                if user_id:
-                    logger.info("Authenticated NIU: %s", user_id)
+                niu = claims.get("sub")
+                if niu:
+                    logger.info("Authenticated NIU: %s", niu)
             except Exception as e:
                 logger.warning("JWT validation failed: %s", e)
-                user_id = None
+                niu = None
 
-        # Expose to views
-        request.authenticated_userid = user_id
-        if user_id:
-            request.effective_principals = [Authenticated, f"user:{user_id}"]
-        else:
-            request.effective_principals = []
+        # Expose NIU to views without touching read-only props
+        request.niu = niu                       # custom attribute for app
+        if niu:
+            request.environ["REMOTE_USER"] = niu  # standard place many apps look at
+
+        # expose principals via a custom attr as well
+        request.user_principals = [Authenticated, f"user:{niu}"] if niu else []
 
         return handler(request)
 

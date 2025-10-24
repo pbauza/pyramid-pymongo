@@ -3,7 +3,7 @@ FROM python:3.12-slim
 
 # Install nginx, php-fpm, supervisor, build tools (for pip wheels)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx php-fpm supervisor build-essential ca-certificates \
+    nginx php-fpm php-curl supervisor build-essential ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 # Working directory
