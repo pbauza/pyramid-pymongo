@@ -23,6 +23,7 @@ def main(global_config=None, **settings):
     config.add_route("home", "/")
     config.add_route("list", "/submissions")
     config.add_route("edit", "/edit/{_id}")
+    config.add_route("whoami", "/_debug/whoami")
 
     # Scan views module for @view_config
     config.scan("app.views")

@@ -66,24 +66,21 @@ $user_unit = '';
 
 // for this test, simply print that the authentication was successfull
 
-// --- Build and set a JWT cookie for Pyramid ---
-
-// Helper for base64url (no padding)
+// --- Build and set a JWT cookie for Pyramid, then redirect to /app ---
 function base64url_encode(string $data): string {
   return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
 }
 
-// Ensure NIU is what you want to store in the token
-$niu = $user_niu; // already trimmed before '@' above
-
+$niu = $user_niu;       // we already trimmed @domain above
 $now = time();
+
 $payload = [
-  'iss' => 'neas.uab.cat',   // issuer
-  'aud' => 'pyramid-app',    // audience (must match Pyramid if you verify 'aud')
+  'iss' => 'neas.uab.cat',
+  'aud' => 'pyramid-app',   // must match Pyramid if you verify 'aud'
   'iat' => $now,
   'nbf' => $now,
-  'exp' => $now + 3600,      // 1 hour
-  'sub' => $niu,             // << NIU here
+  'exp' => $now + 3600,
+  'sub' => $niu,            // << NIU here
 ];
 
 $header = ['alg' => 'RS256', 'typ' => 'JWT'];
@@ -92,7 +89,7 @@ $jwt_header  = base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
 $jwt_payload = base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
 $signing_input = $jwt_header . '.' . $jwt_payload;
 
-// Load private key (mounted in the container at /etc/keys)
+// Private key mounted at /etc/keys in the container
 $private_key_path = '/etc/keys/jwt-private.pem';
 $private_key = openssl_pkey_get_private('file://' . $private_key_path);
 if ($private_key === false) {
@@ -111,7 +108,7 @@ openssl_free_key($private_key);
 
 $jwt = $signing_input . '.' . base64url_encode($signature);
 
-// Send cookie (secure, httpOnly, sameSite=Lax)
+// Send cookie (secure, httpOnly, sameSite=Lax) and go to /app/
 setcookie('session_jwt', $jwt, [
   'expires'  => $now + 3600,
   'path'     => '/',
@@ -120,7 +117,6 @@ setcookie('session_jwt', $jwt, [
   'samesite' => 'Lax',
 ]);
 
-// Redirect to Pyramid
 header('Location: /app/', true, 302);
 exit;
 

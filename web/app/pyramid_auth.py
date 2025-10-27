@@ -3,7 +3,7 @@ import os
 import logging
 import jwt
 from pyramid.request import Request
-from pyramid.httpexceptions import HTTPFound
+from pyramid.httpexceptions import HTTPFound, HTTPUnauthorized
 
 logger = logging.getLogger(__name__)
 
@@ -28,16 +28,10 @@ def auth_tween_factory(handler, registry):
 
         if token:
             try:
-                # IMPORTANT: Either match the aud you issue in PHP ('pyramid-app')...
-                # claims = jwt.decode(
-                #     token, PUBLIC_KEY, algorithms=ALGORITHMS,
-                #     audience="pyramid-app",
-                #     options={"require": ["sub", "exp", "iat"]}
-                # )
-
-                # ...or relax audience checks while debugging:
                 claims = jwt.decode(
-                    token, PUBLIC_KEY, algorithms=ALGORITHMS,
+                    token,
+                    PUBLIC_KEY,
+                    algorithms=["RS256"],
                     options={"verify_aud": False, "require": ["sub", "exp", "iat"]}
                 )
 
@@ -57,7 +51,7 @@ def auth_tween_factory(handler, registry):
 
         # Enforce auth for everything under /app (use original URI to avoid nginx prefix stripping issues)
         if original_uri.startswith("/app") and not _is_public(original_uri) and not niu:
-            return HTTPFound(location="/")  # send to PHP/CAS at root
+            return HTTPUnauthorized("Authentication required")
 
         return handler(request)
 

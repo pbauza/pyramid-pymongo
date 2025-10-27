@@ -10,6 +10,7 @@ from .models import (
     get_submission,
     update_submission,
 )
+import json
 
 
 @view_config(route_name="home", renderer="templates/form.jinja2")
@@ -31,6 +32,15 @@ def home(request):
 
     return context
 
+@view_config(route_name="whoami")
+def whoami(request):
+    info = {
+        "niu": getattr(request, "niu", None),
+        "cookies_seen_by_pyramid": dict(request.cookies),
+        "path": request.path,
+        "original_uri": request.environ.get("HTTP_X_ORIGINAL_URI"),
+    }
+    return Response(json.dumps(info, indent=2), content_type="application/json")
 
 @view_config(route_name="list", renderer="app:templates/list.jinja2")
 def submissions_list(request):
