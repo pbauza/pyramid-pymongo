@@ -32,59 +32,47 @@ phpCAS::handleLogoutRequests();
 // Force authentication (redirects to CAS if needed)
 phpCAS::forceAuthentication();
 
-// ---- Authenticated here ----
-$niu = phpCAS::getUser();
-$_SESSION['niu'] = $niu;
+// Compute NIU (strip domain if present)
+$user = phpCAS::getUser();
+$niu  = strpos($user, '@') !== false ? substr($user, 0, strrpos($user, '@')) : $user;
 
-// ---- Build and set a JWT cookie (RS256) ----
-function base64url_encode(string $data): string {
-    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-}
+// --- Build JWT (RS256) ---
+function b64url(string $s): string { return rtrim(strtr(base64_encode($s), '+/', '-_'), '='); }
 
 $now = time();
 $payload = [
-    'iss' => 'neas.uab.cat',       // issuer
-    'aud' => 'pyramid-app',        // audience (optional, but nice to have)
-    'iat' => $now,
-    'nbf' => $now,
-    'exp' => $now + 3600,          // 1 hour
-    'sub' => $niu,                 // << the NIU goes here
+  'iss' => 'neas.uab.cat',
+  'aud' => 'pyramid-app',   // must match Pyramid audience if you verify it
+  'iat' => $now,
+  'nbf' => $now,
+  'exp' => $now + 3600,
+  'sub' => $niu,
 ];
-
 $header = ['alg' => 'RS256', 'typ' => 'JWT'];
 
-$jwt_header  = base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
-$jwt_payload = base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
-$signing_input = $jwt_header . '.' . $jwt_payload;
+$jwt_header  = b64url(json_encode($header, JSON_UNESCAPED_SLASHES));
+$jwt_payload = b64url(json_encode($payload, JSON_UNESCAPED_SLASHES));
+$sign_input  = $jwt_header . '.' . $jwt_payload;
 
-// Load private key (mounted read-only in the container)
-$private_key_path = '/etc/keys/jwt-private.pem';
-$private_key = openssl_pkey_get_private('file://' . $private_key_path);
-if ($private_key === false) {
-    http_response_code(500);
-    echo "Cannot load private key.";
-    exit;
+$pk_path = '/etc/keys/jwt-private.pem';               // mounted in the container
+$pk      = openssl_pkey_get_private('file://' . $pk_path);
+if ($pk === false) { http_response_code(500); exit('Private key not found'); }
+
+if (!openssl_sign($sign_input, $sig, $pk, OPENSSL_ALGO_SHA256)) {
+  http_response_code(500); exit('Cannot sign JWT');
 }
+openssl_free_key($pk);
 
-$signature = '';
-if (!openssl_sign($signing_input, $signature, $private_key, OPENSSL_ALGO_SHA256)) {
-    http_response_code(500);
-    echo "Cannot sign JWT.";
-    exit;
-}
-openssl_free_key($private_key);
+$jwt = $sign_input . '.' . b64url($sig);
 
-$jwt = $signing_input . '.' . base64url_encode($signature);
-
-// Send cookie (secure, httpOnly, sameSite=Lax)
+// --- Set cookie and bounce to /app ---
 setcookie('session_jwt', $jwt, [
-    'expires'  => $now + 3600,
-    'path'     => '/',
-    'secure'   => true,
-    'httponly' => true,
-    'samesite' => 'Lax',
+  'expires'  => $now + 3600,
+  'path'     => '/',
+  'secure'   => true,
+  'httponly' => true,
+  'samesite' => 'Lax',
 ]);
 
-// ---- Redirect to Pyramid app ----
 header('Location: /app/', true, 302);
 exit;
