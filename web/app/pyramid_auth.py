@@ -14,10 +14,8 @@ ALGORITHMS = ["RS256"]
 with open(PUBLIC_KEY_PATH, "rb") as f:
     PUBLIC_KEY = f.read()
 
-# Paths that should NOT require auth (health, static, etc.)
 PUBLIC_PATH_PREFIXES = (
     "/static/",
-    "/_health",        # if you have one
 )
 
 def _is_public(path: str) -> bool:
