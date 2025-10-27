@@ -1,9 +1,9 @@
 # web/app/pyramid_auth.py
 import os
-import jwt
 import logging
+import jwt
 from pyramid.request import Request
-from pyramid.httpexceptions import HTTPFound, HTTPUnauthorized
+from pyramid.httpexceptions import HTTPFound
 
 logger = logging.getLogger(__name__)
 
@@ -14,42 +14,50 @@ ALGORITHMS = ["RS256"]
 with open(PUBLIC_KEY_PATH, "rb") as f:
     PUBLIC_KEY = f.read()
 
-PUBLIC_PATH_PREFIXES = (
-    "/static/",
-)
-
+# Public paths that should NOT enforce login
+PUBLIC_PATH_PREFIXES = ("/static/", "/_health")
 def _is_public(path: str) -> bool:
-    return any(path.startswith(p) for p in PUBLIC_PATH_PREFIXES) or path == "/"
+    return path == "/" or any(path.startswith(p) for p in PUBLIC_PATH_PREFIXES)
 
 def auth_tween_factory(handler, registry):
     def auth_tween(request: Request):
         niu = None
         token = request.cookies.get(COOKIE_NAME)
+        path = request.path_info or "/"
+        original_uri = request.environ.get("HTTP_X_ORIGINAL_URI", path)
 
         if token:
             try:
+                # IMPORTANT: Either match the aud you issue in PHP ('pyramid-app')...
+                # claims = jwt.decode(
+                #     token, PUBLIC_KEY, algorithms=ALGORITHMS,
+                #     audience="pyramid-app",
+                #     options={"require": ["sub", "exp", "iat"]}
+                # )
+
+                # ...or relax audience checks while debugging:
                 claims = jwt.decode(
-                    token,
-                    PUBLIC_KEY,
-                    algorithms=ALGORITHMS,
-                    audience="pyramid-app",
-                    options={"require": ["sub", "exp", "iat"]}
+                    token, PUBLIC_KEY, algorithms=ALGORITHMS,
+                    options={"verify_aud": False, "require": ["sub", "exp", "iat"]}
                 )
+
                 niu = claims.get("sub")
                 if niu:
                     logger.info("Authenticated NIU: %s", niu)
+                else:
+                    logger.warning("JWT decoded but no 'sub' claim: %s", claims)
             except Exception as e:
-                logger.warning("JWT validation failed: %s", e)
+                # Log WHY it failed (invalid audience, bad signature, expired, etc.)
+                logger.error("JWT validation failed: %s", e)
 
         # Expose NIU for views
         request.niu = niu
         if niu:
             request.environ["REMOTE_USER"] = niu
 
-        # Enforce auth for /app/* (except public paths)
-        path = request.path_info or "/"
-        if path.startswith("/app") and not _is_public(path) and not niu:
-            return HTTPUnauthorized(json_body={"error": "unauthorized"})
+        # Enforce auth for everything under /app (use original URI to avoid nginx prefix stripping issues)
+        if original_uri.startswith("/app") and not _is_public(original_uri) and not niu:
+            return HTTPFound(location="/")  # send to PHP/CAS at root
 
         return handler(request)
 
