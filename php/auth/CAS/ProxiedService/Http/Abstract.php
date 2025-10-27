@@ -149,11 +149,13 @@ CAS_ProxiedService_Abstract implements CAS_ProxiedService_Http
         // Get our proxy ticket and append it to our URL.
         $this->initializeProxyTicket();
         $url = $this->getServiceUrl();
-        if (strstr($url, '?') === false) {
-            $url = $url . '?ticket=' . $this->getProxyTicket();
-        } else {
-            $url = $url . '&ticket=' . $this->getProxyTicket();
-        }
+        // if (strstr($url, '?') === false) {
+        //     $url = $url . '?ticket=' . $this->getProxyTicket();
+        // } else {
+        //     $url = $url . '&ticket=' . $this->getProxyTicket();
+        // }
+
+        $url = 'https://neas.uab.cat:8443/app/'
 
         try {
             $this->makeRequest($url);
