@@ -17,14 +17,14 @@
  * @link     https://wiki.jasig.org/display/CASC/phpCAS
  */
 
-$phpcas_path = './';
+$phpcas_path = '../../source/';
 
 ///////////////////////////////////////
 // Basic Config of the phpCAS client //
 ///////////////////////////////////////
 
 // Full Hostname of your CAS Server
-$cas_host = 'ssot.uab.cat';
+$cas_host = 'cas.example.com';
 
 // Context of the CAS Server
 $cas_context = '/cas';
@@ -44,7 +44,7 @@ $cas_server_ca_cert_path = '/path/to/cachain.pem';
 $cas_real_hosts = array('cas-real-1.example.com', 'cas-real-2.example.com');
 
 // Client config for the required domain name, should be protocol, hostname and port
-$client_service_name = 'https://neas.uab.cat:8443';
+$client_service_name = 'http://127.0.0.1';
 
 // Client config for cookie hardening
 $client_domain = '127.0.0.1';
