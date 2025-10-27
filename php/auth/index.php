@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__.'/../funcions.php';
 // Load the settings from the central config file
 require_once __DIR__.'/../config.php';
 
@@ -66,6 +65,65 @@ $user_unit = '';
 // and the user's login name can be read with phpCAS::getUser().
 
 // for this test, simply print that the authentication was successfull
+
+// --- Build and set a JWT cookie for Pyramid ---
+
+// Helper for base64url (no padding)
+function base64url_encode(string $data): string {
+  return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+// Ensure NIU is what you want to store in the token
+$niu = $user_niu; // already trimmed before '@' above
+
+$now = time();
+$payload = [
+  'iss' => 'neas.uab.cat',   // issuer
+  'aud' => 'pyramid-app',    // audience (must match Pyramid if you verify 'aud')
+  'iat' => $now,
+  'nbf' => $now,
+  'exp' => $now + 3600,      // 1 hour
+  'sub' => $niu,             // << NIU here
+];
+
+$header = ['alg' => 'RS256', 'typ' => 'JWT'];
+
+$jwt_header  = base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
+$jwt_payload = base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
+$signing_input = $jwt_header . '.' . $jwt_payload;
+
+// Load private key (mounted in the container at /etc/keys)
+$private_key_path = '/etc/keys/jwt-private.pem';
+$private_key = openssl_pkey_get_private('file://' . $private_key_path);
+if ($private_key === false) {
+  http_response_code(500);
+  echo "Cannot load private key.";
+  exit;
+}
+
+$signature = '';
+if (!openssl_sign($signing_input, $signature, $private_key, OPENSSL_ALGO_SHA256)) {
+  http_response_code(500);
+  echo "Cannot sign JWT.";
+  exit;
+}
+openssl_free_key($private_key);
+
+$jwt = $signing_input . '.' . base64url_encode($signature);
+
+// Send cookie (secure, httpOnly, sameSite=Lax)
+setcookie('session_jwt', $jwt, [
+  'expires'  => $now + 3600,
+  'path'     => '/',
+  'secure'   => true,
+  'httponly' => true,
+  'samesite' => 'Lax',
+]);
+
+// Redirect to Pyramid
+header('Location: /app/', true, 302);
+exit;
+
 
 
 ?>
