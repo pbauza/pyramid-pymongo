@@ -2,8 +2,8 @@
 import os
 import jwt
 import logging
-from pyramid.security import Authenticated
 from pyramid.request import Request
+from pyramid.httpexceptions import HTTPFound, HTTPUnauthorized
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,15 @@ ALGORITHMS = ["RS256"]
 
 with open(PUBLIC_KEY_PATH, "rb") as f:
     PUBLIC_KEY = f.read()
+
+# Paths that should NOT require auth (health, static, etc.)
+PUBLIC_PATH_PREFIXES = (
+    "/static/",
+    "/_health",        # if you have one
+)
+
+def _is_public(path: str) -> bool:
+    return any(path.startswith(p) for p in PUBLIC_PATH_PREFIXES) or path == "/"
 
 def auth_tween_factory(handler, registry):
     def auth_tween(request: Request):
@@ -25,7 +34,7 @@ def auth_tween_factory(handler, registry):
                     token,
                     PUBLIC_KEY,
                     algorithms=ALGORITHMS,
-                    audience="pyramid-app",  # must match PHP 'aud'
+                    audience="pyramid-app",
                     options={"require": ["sub", "exp", "iat"]}
                 )
                 niu = claims.get("sub")
@@ -33,15 +42,16 @@ def auth_tween_factory(handler, registry):
                     logger.info("Authenticated NIU: %s", niu)
             except Exception as e:
                 logger.warning("JWT validation failed: %s", e)
-                niu = None
 
-        # Expose NIU to views without touching read-only props
-        request.niu = niu                       # custom attribute for app
+        # Expose NIU for views
+        request.niu = niu
         if niu:
-            request.environ["REMOTE_USER"] = niu  # standard place many apps look at
+            request.environ["REMOTE_USER"] = niu
 
-        # expose principals via a custom attr as well
-        request.user_principals = [Authenticated, f"user:{niu}"] if niu else []
+        # Enforce auth for /app/* (except public paths)
+        path = request.path_info or "/"
+        if path.startswith("/app") and not _is_public(path) and not niu:
+            return HTTPUnauthorized(json_body={"error": "unauthorized"})
 
         return handler(request)
 
