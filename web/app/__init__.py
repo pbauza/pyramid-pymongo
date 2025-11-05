@@ -1,31 +1,39 @@
 """
 Pyramid application factory and setup.
-
 """
-import os
 from pyramid.config import Configurator
+from pyramid.httpexceptions import HTTPFound
+from pyramid.view import view_config
+
+
+@view_config(route_name="app_entry")
+def app_entry(request):
+    """Redirects /app to the main home page."""
+    return HTTPFound(location="/")
 
 
 def main(global_config=None, **settings):
     """
-    Create and return a Pyramid WSGI application.
-    We keep configuration minimal and driven by environment variables.
+    Create and return the Pyramid WSGI application.
+    Registers routes, views, templates, and authentication tween.
     """
-    # Merge env-based settings so templates can use them if needed
     settings = settings or {}
     settings.setdefault("jinja2.directories", "app/templates")
 
     config = Configurator(settings=settings)
-    config.include("pyramid_jinja2")  # Enable Jinja2 templating
+    config.include("pyramid_jinja2")
     config.add_tween("app.pyramid_auth.auth_tween_factory")
 
-    # Routes
+    # Application routes
     config.add_route("home", "/")
     config.add_route("list", "/submissions")
     config.add_route("edit", "/edit/{_id}")
     config.add_route("whoami", "/_debug/whoami")
 
-    # Scan views module for @view_config
+    # /app route simply redirects to home (so the user lands correctly after login)
+    config.add_route("app_entry", "/app/")
+
+    # Scan for @view_config declarations in the views module
     config.scan("app.views")
 
     return config.make_wsgi_app()
