@@ -51,9 +51,9 @@
       <span class="navbar-brand fw-bold">Experiments</span>
       <nav class="navbar-nav">
         <a class="nav-link {% if request.matched_route.name == 'home' %}active{% endif %}"
-           href="{{ request.route_url('home') }}">New submission</a>
+           href="{{ request.route_path('home') }}">New submission</a>
         <a class="nav-link {% if request.matched_route.name == 'list' %}active{% endif %}"
-           href="{{ request.route_url('list') }}">Submissions</a>
+           href="{{ request.route_path('list') }}">Submissions</a>
       </nav>
     </div>
   </header>
