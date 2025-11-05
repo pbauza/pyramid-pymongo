@@ -2,9 +2,9 @@
 {% block content %}
 <h2>New submission</h2>
 
-<p><strong>Authenticated as:</strong> {{ full_name }} ({{ niu }})</p>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<p><strong>Usuario autenticado:</strong> {{ niu or "Desconocido" }}</p>
 
 <form method="post">
   <div class="row">
@@ -12,6 +12,23 @@
       <label for="experiment_id">Experiment identifier *</label>
       <input id="experiment_id" name="experiment_id" required
              value="{{ values.get('experiment_id','') }}" />
+    </div>
+    <div>
+      <label for="niu">NIU *</label>
+      <input id="niu" name="niu" readonly value="{{ niu }}" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="first_name">First name *</label>
+      <input id="first_name" name="first_name" required
+             value="{{ values.get('first_name','') }}" />
+    </div>
+    <div>
+      <label for="last_name">Last name *</label>
+      <input id="last_name" name="last_name" required
+             value="{{ values.get('last_name','') }}" />
     </div>
   </div>
 
@@ -34,7 +51,9 @@
   </div>
 
   <div class="actions">
-    <button class="btn btn-primary" type="submit">Save</button>
+    <button class="btn" type="submit">Save</button>
   </div>
+
+  <p><small class="mono">* Required</small></p>
 </form>
 {% endblock %}
