@@ -12,25 +12,35 @@ from .models import (
 )
 import json
 
-
 @view_config(route_name="home", renderer="templates/form.jinja2")
 def home(request):
     """
     Render the submission form and handle POST to create a new record.
+    Includes NIU from CAS authentication via Nginx.
     """
-    context = {"error": None, "success": None, "values": {}}
+    # Leer el NIU enviado por Nginx (desde X-CTAO-NIU)
+    niu = request.headers.get("X-CTAO-NIU")
+
+    context = {
+        "error": None,
+        "success": None,
+        "values": {},
+        "niu": niu,  # para usarlo en la plantilla o la lógica
+    }
 
     if request.method == "POST":
         params = {k: request.params.get(k) for k in request.params.keys()}
+        params["niu"] = niu  # opcional: guardar el NIU junto a la submission
+
         try:
             _id = create_submission(params)
-            # Redirect to list after creation
             return HTTPFound(location=request.route_url("list"))
         except Exception as e:
             context["error"] = str(e)
             context["values"] = params
 
     return context
+
 
 @view_config(route_name="whoami")
 def whoami(request):
