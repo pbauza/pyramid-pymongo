@@ -16,7 +16,6 @@ import json
 @view_config(route_name="app_entry_slash")
 def app_entry(request):
     """Serve the same as home for /app/."""
-    from app.views import home_view
     return home(request)
 
 
