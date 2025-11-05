@@ -39,6 +39,8 @@ def main(global_config=None, **settings):
     config.add_route("list", "/app/submissions")
     config.add_route("edit", "/app/edit/{_id}")
     config.add_route("whoami", "/app/_debug/whoami")
+    config.add_route("admin", "/app/admin")
+
     config.add_request_method(lambda r: getattr(r, "niu", None), "niu", reify=True)
 
     # Scan for @view_config declarations in the views module
