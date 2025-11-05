@@ -19,19 +19,18 @@ def home(request):
     Render the submission form and handle POST to create a new record.
     Includes NIU from CAS authentication via Nginx.
     """
-    # Leer el NIU enviado por Nginx (desde X-CTAO-NIU)
-    niu = request.headers.get("X-CTAO-NIU")
+    niu = request.environ["REMOTE_USER"]
 
     context = {
         "error": None,
         "success": None,
         "values": {},
-        "niu": niu,  # para usarlo en la plantilla o la lógica
+        "niu": niu,
     }
 
     if request.method == "POST":
         params = {k: request.params.get(k) for k in request.params.keys()}
-        params["niu"] = niu  # opcional: guardar el NIU junto a la submission
+        params["niu"] = niu
 
         try:
             _id = create_submission(params)

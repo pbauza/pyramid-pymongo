@@ -35,6 +35,6 @@ if (time() > ($payload['exp'] ?? 0)) {
 }
 
 // OK: devolvemos el NIU
-header('X-CTAO-NIU: ' . $payload['sub']);
+header('NIU: ' . $payload['sub']);
 http_response_code(200);
 exit;
