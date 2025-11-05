@@ -15,6 +15,8 @@ def main(global_config=None, **settings):
     settings.setdefault("jinja2.directories", "app/templates")
 
     config = Configurator(settings=settings)
+    config.add_settings({"trusted_proxy_headers": ["x-forwarded-proto", "x-forwarded-host", "x-forwarded-port"]})
+
     config.include("pyramid_jinja2")
     config.add_tween("app.pyramid_auth.auth_tween_factory")
 
