@@ -24,6 +24,7 @@ def main(global_config=None, **settings):
     config.add_route("list", "/submissions")
     config.add_route("edit", "/edit/{_id}")
     config.add_route("whoami", "/_debug/whoami")
+    config.add_request_method(lambda r: getattr(r, "niu", None), "niu", reify=True)
 
     # Scan for @view_config declarations in the views module
     config.scan("app.views")
