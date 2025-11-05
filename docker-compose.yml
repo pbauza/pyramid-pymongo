@@ -18,7 +18,7 @@ services:
     ports:
       - "8443:8443"
     volumes:
-      - ./keys:/etc/keys:ro
+      - ./keys:/etc/keys
     env_file:
       - .env
     environment:
