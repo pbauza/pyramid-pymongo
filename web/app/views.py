@@ -15,8 +15,10 @@ import json
 @view_config(route_name="app_entry")
 @view_config(route_name="app_entry_slash")
 def app_entry(request):
-    """Redirect both /app and /app/ to the main home page."""
-    return HTTPFound(location="/")
+    """Serve the same as home for /app/."""
+    from app.views import home_view
+    return home(request)
+
 
 @view_config(route_name="home", renderer="templates/form.jinja2")
 def home(request):
