@@ -21,6 +21,8 @@ def main(global_config=None, **settings):
         "x-forwarded-port"
     ]
 
+    settings["pyramid.default_scheme"] = "https"
+
     config = Configurator(settings=settings)
     config.add_settings({"trusted_proxy_headers": ["x-forwarded-proto", "x-forwarded-host", "x-forwarded-port"]})
 
