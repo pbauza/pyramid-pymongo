@@ -21,9 +21,9 @@ def main(global_config=None, **settings):
     # Application routes
     config.add_route("home", "/app")
     config.add_route("home_slash", "/app/")
-    config.add_route("list", "/submissions")
-    config.add_route("edit", "/edit/{_id}")
-    config.add_route("whoami", "/_debug/whoami")
+    config.add_route("list", "/app/submissions")
+    config.add_route("edit", "/app/edit/{_id}")
+    config.add_route("whoami", "/app/_debug/whoami")
     config.add_request_method(lambda r: getattr(r, "niu", None), "niu", reify=True)
 
     # Scan for @view_config declarations in the views module
