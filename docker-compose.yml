@@ -15,6 +15,8 @@ services:
       context: .
       dockerfile: web/Dockerfile
     container_name: pyramid_web
+    group_add:
+      - "1021"   
     ports:
       - "8443:8443"
     volumes:

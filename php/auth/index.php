@@ -54,23 +54,15 @@ $jwt_header  = b64url(json_encode($header, JSON_UNESCAPED_SLASHES));
 $jwt_payload = b64url(json_encode($payload, JSON_UNESCAPED_SLASHES));
 $sign_input  = $jwt_header . '.' . $jwt_payload;
 
-$pk_path = '/etc/keys/jwt-private.pem';  // mounted in the container
+$pk_path = '/etc/keys/jwt-private.pem';
 
-if (!is_readable($pk_path)) {
-    http_response_code(500);
-    exit('Private key not readable');
-}
-
-$pk_data = file_get_contents($pk_path);
-if ($pk_data === false) {
-    http_response_code(500);
-    exit('Cannot read private key');
-}
+$pk_data = @file_get_contents($pk_path);
+if ($pk_data === false) { http_response_code(500); exit('Private key not readable'); }
 
 $pk = openssl_pkey_get_private($pk_data);
 if ($pk === false) {
-    http_response_code(500);
-    exit('Private key not found');
+  error_log('OpenSSL: ' . (function_exists('openssl_error_string') ? openssl_error_string() : 'no details'));
+  http_response_code(500); exit('Private key not found');
 }
 
 if (!openssl_sign($sign_input, $sig, $pk, OPENSSL_ALGO_SHA256)) {
