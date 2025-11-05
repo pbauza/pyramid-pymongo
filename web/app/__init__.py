@@ -6,14 +6,6 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 
 
-@view_config(route_name="app_entry")
-@view_config(route_name="app_entry_slash")
-def app_entry(request):
-    """Redirect both /app and /app/ to the main home page."""
-    return HTTPFound(location="/")
-
-
-
 def main(global_config=None, **settings):
     """
     Create and return the Pyramid WSGI application.
