@@ -8,6 +8,16 @@ from typing import Dict, Any, Optional
 from bson import ObjectId
 from pymongo import MongoClient
 
+def list_submissions_by_niu(niu: str, limit: int = 100):
+    """List submissions belonging to a specific NIU."""
+    col = get_collection()
+    return list(col.find({"niu": niu}).sort("created_at", -1).limit(limit))
+
+
+def is_owner_or_admin(niu: str, doc: Dict[str, Any]) -> bool:
+    """Return True if the NIU owns the document or is in SUPERUSERS."""
+    admins = [x.strip() for x in os.getenv("SUPERUSERS", "").split(",") if x.strip()]
+    return doc.get("niu") == niu or niu in admins
 
 def get_collection():
     """

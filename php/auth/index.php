@@ -32,6 +32,8 @@ phpCAS::handleLogoutRequests();
 // Force authentication (redirects to CAS if needed)
 phpCAS::forceAuthentication();
 
+error_log(print_r(phpCAS::getAttributes(), true));
+
 // Compute NIU (strip domain if present)
 $user = phpCAS::getUser();
 $niu  = strpos($user, '@') !== false ? substr($user, 0, strrpos($user, '@')) : $user;
