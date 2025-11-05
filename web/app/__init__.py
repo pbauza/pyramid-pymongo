@@ -11,11 +11,24 @@ def main(global_config=None, **settings):
     Create and return the Pyramid WSGI application.
     Registers routes, views, templates, and authentication tween.
     """
+
     settings = settings or {}
     settings.setdefault("jinja2.directories", "app/templates")
 
+    settings["trusted_proxy_headers"] = [
+        "x-forwarded-proto",
+        "x-forwarded-host",
+        "x-forwarded-port"
+    ]
+
     config = Configurator(settings=settings)
     config.add_settings({"trusted_proxy_headers": ["x-forwarded-proto", "x-forwarded-host", "x-forwarded-port"]})
+
+    config.add_request_method(
+        lambda req: req.headers.get("X-Forwarded-Proto", req.scheme),
+        "real_scheme",
+        reify=True,
+    )
 
     config.include("pyramid_jinja2")
     config.add_tween("app.pyramid_auth.auth_tween_factory")
