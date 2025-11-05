@@ -12,13 +12,7 @@ from .models import (
 )
 import json
 
-@view_config(route_name="app_entry")
-@view_config(route_name="app_entry_slash")
-def app_entry(request):
-    """Serve the same as home for /app/."""
-    return home(request)
-
-
+@view_config(route_name="home_slash", renderer="templates/form.jinja2")
 @view_config(route_name="home", renderer="templates/form.jinja2")
 def home(request):
     """

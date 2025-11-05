@@ -19,14 +19,11 @@ def main(global_config=None, **settings):
     config.add_tween("app.pyramid_auth.auth_tween_factory")
 
     # Application routes
-    config.add_route("home", "/")
+    config.add_route("home", "/app")
+    config.add_route("home_slash", "/app/")
     config.add_route("list", "/submissions")
     config.add_route("edit", "/edit/{_id}")
     config.add_route("whoami", "/_debug/whoami")
-
-    config.add_route("app_entry", "/app")
-    config.add_route("app_entry_slash", "/app/")
-
 
     # Scan for @view_config declarations in the views module
     config.scan("app.views")
