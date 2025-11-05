@@ -5,6 +5,12 @@ from pyramid.config import Configurator
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 
+from pyramid.events import NewRequest
+
+def force_https(event):
+    req = event.request
+    if req.headers.get("X-Forwarded-Proto", "").lower() == "https":
+        req.environ["wsgi.url_scheme"] = "https"
 
 def main(global_config=None, **settings):
     """
@@ -45,5 +51,7 @@ def main(global_config=None, **settings):
 
     # Scan for @view_config declarations in the views module
     config.scan("app.views")
+    config.add_subscriber(force_https, NewRequest)
+
 
     return config.make_wsgi_app()
