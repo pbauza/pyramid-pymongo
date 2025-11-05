@@ -7,9 +7,11 @@ from pyramid.view import view_config
 
 
 @view_config(route_name="app_entry")
+@view_config(route_name="app_entry_slash")
 def app_entry(request):
-    """Redirects /app to the main home page."""
+    """Redirect both /app and /app/ to the main home page."""
     return HTTPFound(location="/")
+
 
 
 def main(global_config=None, **settings):
@@ -30,8 +32,9 @@ def main(global_config=None, **settings):
     config.add_route("edit", "/edit/{_id}")
     config.add_route("whoami", "/_debug/whoami")
 
-    # /app route simply redirects to home (so the user lands correctly after login)
-    config.add_route("app_entry", "/app/")
+    config.add_route("app_entry", "/app")
+    config.add_route("app_entry_slash", "/app/")
+
 
     # Scan for @view_config declarations in the views module
     config.scan("app.views")
