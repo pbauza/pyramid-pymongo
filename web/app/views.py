@@ -82,36 +82,30 @@ def submissions_list(request):
     return {"docs": docs, "is_admin": is_admin}
 
 
-@view_config(route_name="edit", renderer="app:templates/edit.jinja2")
-def edit_submission(request):
-    """
-    Allow editing only if the record belongs to the authenticated NIU,
-    unless the user is an admin.
-    """
-    niu = request.environ.get("REMOTE_USER", None)
-    admin = is_admin(niu)
-    oid = request.matchdict.get("_id")
-    doc = get_submission(oid)
+@view_config(route_name="list", renderer="app:templates/list.jinja2")
+def submissions_list(request):
+    niu = request.environ.get("REMOTE_USER")
+    admin_nius = os.getenv("ADMIN_NIUS", "").split(",")
 
-    if not doc:
-        return Response("Not found", status=404)
+    is_admin = niu in admin_nius
 
-    if not admin and doc.get("niu") != niu:
-        return HTTPForbidden("You are not allowed to edit this record.")
+    # Admins see all submissions; others only their own
+    if is_admin:
+        docs_raw = list_submissions(limit=200)
+    else:
+        docs_raw = list_submissions(niu=niu, limit=200)
 
-    doc["id"] = str(doc["_id"])
-    context = {"doc": doc, "error": None, "is_admin": admin}
+    docs = []
+    for d in docs_raw:
+        d["id"] = str(d["_id"])
+        docs.append(d)
 
-    if request.method == "POST":
-        params = {k: request.params.get(k) for k in request.params.keys()}
-        ok = update_submission(oid, params)
-        if ok:
-            # raise alert success in html template
-            context["success"] = f"Submission updated."
-            return context
-        context["error"] = "Update failed. Please check the input."
+    return {
+        "docs": docs,
+        "is_admin": is_admin,
+        "niu": niu,
+    }
 
-    return context
 
 
 @view_config(route_name="admin", renderer="app:templates/list.jinja2")
