@@ -1,6 +1,8 @@
 """
 Pyramid views: form, list, edit and admin handlers.
 """
+import csv
+from io import StringIO
 import os
 import json
 from pyramid.view import view_config
@@ -11,6 +13,7 @@ from .models import (
     list_submissions,
     get_submission,
     update_submission,
+    get_collection
 )
 
 # --- Helpers ---
@@ -133,3 +136,43 @@ def whoami(request):
         "original_uri": request.environ.get("HTTP_X_ORIGINAL_URI"),
     }
     return Response(json.dumps(info, indent=2), content_type="application/json")
+
+
+@view_config(route_name="export_csv")
+def export_csv(request):
+    """
+    Export all submissions in CSV format.
+    Accessible only to admin NIUs (configured via env var ADMIN_NIUS).
+    """
+    niu = request.environ.get("REMOTE_USER")
+    admin_nius = os.getenv("ADMIN_NIUS", "").split(",")
+
+    # check access
+    if niu not in admin_nius:
+        return Response("Forbidden", status=403)
+
+    col = get_collection()
+    docs = list(col.find({}))
+
+    if not docs:
+        return Response("No data found", status=404)
+
+    # Get all unique keys (for flexible schema)
+    all_keys = sorted(set().union(*(d.keys() for d in docs)) - {"_id"})
+
+    # Write CSV to memory
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=["_id"] + all_keys)
+    writer.writeheader()
+    for d in docs:
+        d = {**{k: "" for k in all_keys}, **d}  # fill missing
+        d["_id"] = str(d.get("_id"))
+        writer.writerow({k: d.get(k, "") for k in ["_id"] + all_keys})
+
+    csv_bytes = output.getvalue().encode("utf-8")
+
+    return Response(
+        body=csv_bytes,
+        content_type="text/csv",
+        content_disposition='attachment; filename="submissions.csv"',
+    )

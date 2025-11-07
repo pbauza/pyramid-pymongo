@@ -40,6 +40,7 @@ def main(global_config=None, **settings):
     config.add_route("edit", "/app/edit/{_id}")
     config.add_route("whoami", "/app/_debug/whoami")
     config.add_route("admin", "/app/admin")
+    config.add_route("export_csv", "/app/admin/export")
 
     config.add_request_method(lambda r: getattr(r, "niu", None), "niu", reify=True)
 
