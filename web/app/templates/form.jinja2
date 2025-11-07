@@ -4,9 +4,17 @@
   <div class="card-body">
     <h3 class="mb-3">New submission</h3>
 
-    {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
+  {% if success %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      ✅ {{ success }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% elif error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      ⚠️ {{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endif %}
 
     <p><strong>Authenticated User:</strong> {{ niu or "Unknown" }}</p>
 

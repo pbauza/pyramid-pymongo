@@ -2,8 +2,16 @@
 {% block content %}
 <h2 class="mb-4">Edit Submission</h2>
 
-{% if error %}
-  <div class="error mb-3">{{ error }}</div>
+{% if success %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    ✅ {{ success }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+{% elif error %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    ⚠️ {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
 {% endif %}
 
 <form method="post">
