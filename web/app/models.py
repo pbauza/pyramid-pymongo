@@ -94,6 +94,12 @@ def list_submissions(limit: int = 100, niu: Optional[str] = None):
     query = {"niu": niu} if niu else {}
     return list(col.find(query).sort("created_at", -1).limit(limit))
 
+def list_submissions_by_niu(niu: str, limit: int = 100):
+    """
+    List submissions for a specific NIU.
+    """
+    col = get_collection()
+    return list(col.find({"niu": niu}).sort("created_at", -1).limit(limit))
 
 def get_submission(oid: str) -> Optional[Dict[str, Any]]:
     """

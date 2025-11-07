@@ -13,9 +13,15 @@
 
 <p><strong>User:</strong> {{ niu }}{% if is_admin %} <span class="badge bg-success">Admin</span>{% endif %}</p>
 
-<a href="{{ request.route_path('export_csv') }}" class="btn btn-success">
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Submissions</h2>
+  {% if is_admin %}
+  <a href="{{ request.route_path('export_csv') }}" class="btn btn-success">
     ⬇️ Export CSV
-</a>
+  </a>
+  {% endif %}
+</div>
+
 
 <div class="card shadow-sm">
   <div class="card-body p-0">

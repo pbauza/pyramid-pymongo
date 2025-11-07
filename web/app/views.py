@@ -53,7 +53,8 @@ def home(request):
 
         try:
             _id = create_submission(params)
-            return HTTPFound(location="https://neas.uab.cat/app/submissions")
+            # raise alert success in html template
+            context["success"] = f"Submission created successfully with ID {_id}."
         except Exception as e:
             context["error"] = str(e)
             context["values"] = params
@@ -63,20 +64,22 @@ def home(request):
 
 @view_config(route_name="list", renderer="app:templates/list.jinja2")
 def submissions_list(request):
-    """
-    List all submissions.
-    Normal users: only their own.
-    Admins: all.
-    """
-    niu = request.environ.get("REMOTE_USER", None)
-    admin = is_admin(niu)
+    niu = request.environ.get("REMOTE_USER")
+    admin_nius = os.getenv("ADMIN_NIUS", "").split(",")
 
-    docs_raw = list_submissions(limit=500, niu=None if admin else niu)
+    is_admin = niu in admin_nius
+
+    # Admins see all submissions; others only their own
+    if is_admin:
+        docs_raw = list_submissions(limit=200)
+    else:
+        docs_raw = list_submissions(niu=niu, limit=200)
+
     docs = []
     for d in docs_raw:
         d["id"] = str(d["_id"])
         docs.append(d)
-    return {"docs": docs, "niu": niu, "is_admin": admin}
+    return {"docs": docs, "is_admin": is_admin}
 
 
 @view_config(route_name="edit", renderer="app:templates/edit.jinja2")
@@ -103,7 +106,9 @@ def edit_submission(request):
         params = {k: request.params.get(k) for k in request.params.keys()}
         ok = update_submission(oid, params)
         if ok:
-            return HTTPFound(location="https://neas.uab.cat/app/submissions")
+            # raise alert success in html template
+            context["success"] = f"Submission updated."
+            return context
         context["error"] = "Update failed. Please check the input."
 
     return context
