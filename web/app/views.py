@@ -50,7 +50,7 @@ def home(request):
 
         try:
             _id = create_submission(params)
-            return HTTPFound(location=request.route_path("list"))
+            return HTTPFound(location=request.route_url("list"))
         except Exception as e:
             context["error"] = str(e)
             context["values"] = params
