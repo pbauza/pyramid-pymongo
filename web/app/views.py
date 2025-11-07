@@ -50,7 +50,7 @@ def home(request):
 
         try:
             _id = create_submission(params)
-            return HTTPFound(location=request.route_url("list"))
+            return HTTPFound(location="https://neas.uab.cat/app/submissions")
         except Exception as e:
             context["error"] = str(e)
             context["values"] = params
@@ -100,7 +100,7 @@ def edit_submission(request):
         params = {k: request.params.get(k) for k in request.params.keys()}
         ok = update_submission(oid, params)
         if ok:
-            return HTTPFound(location=request.route_path("list"))
+            return HTTPFound(location="https://neas.uab.cat/app/submissions")
         context["error"] = "Update failed. Please check the input."
 
     return context
