@@ -9,6 +9,11 @@ from bson import ObjectId
 from pymongo import MongoClient
 
 
+def is_owner_or_admin(niu: str, doc: Dict[str, Any]) -> bool:
+    """Return True if the NIU owns the document or is in SUPERUSERS."""
+    admins = [x.strip() for x in os.getenv("SUPERUSERS", "").split(",") if x.strip()]
+    return doc.get("niu") == niu or niu in admins
+
 def get_collection():
     """
     Return a MongoDB collection using environment variables.
@@ -80,13 +85,21 @@ def create_submission(payload: Dict[str, Any]) -> ObjectId:
     return result.inserted_id
 
 
-def list_submissions(limit: int = 100):
+def list_submissions(limit: int = 100, niu: Optional[str] = None):
     """
     List recent submissions ordered by creation date.
+    If NIU is provided, only return submissions for that user.
     """
     col = get_collection()
-    return list(col.find({}).sort("created_at", -1).limit(limit))
+    query = {"niu": niu} if niu else {}
+    return list(col.find(query).sort("created_at", -1).limit(limit))
 
+def list_submissions_by_niu(niu: str, limit: int = 100):
+    """
+    List submissions for a specific NIU.
+    """
+    col = get_collection()
+    return list(col.find({"niu": niu}).sort("created_at", -1).limit(limit))
 
 def get_submission(oid: str) -> Optional[Dict[str, Any]]:
     """

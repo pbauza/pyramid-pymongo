@@ -1,28 +1,26 @@
-version: "3.9"
-
 services:
   mongo:
-    image: mongo:7
-    container_name: pyramid_mongo
+    image: mongo:4.2.1
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_DATABASE: experiments
     volumes:
-      - ./data/mongodb:/data/db  # host folder persists data
+      - mongo-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
-
   web:
     build:
-      context: ./web
+      context: .
+      dockerfile: web/Dockerfile
     container_name: pyramid_web
+    group_add:
+      - "1021"   
     ports:
-      - "8000:8000"
+      - "8443:8443"
+    volumes:
+      - ./keys:/etc/keys
     env_file:
       - .env
     environment:
@@ -33,3 +31,5 @@ services:
     depends_on:
       - mongo
     restart: unless-stopped
+volumes:
+  mongo-data:

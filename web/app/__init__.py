@@ -1,29 +1,50 @@
 """
 Pyramid application factory and setup.
-
 """
-import os
 from pyramid.config import Configurator
-
+from pyramid.httpexceptions import HTTPFound
 
 def main(global_config=None, **settings):
     """
-    Create and return a Pyramid WSGI application.
-    We keep configuration minimal and driven by environment variables.
+    Create and return the Pyramid WSGI application.
+    Registers routes, views, templates, and authentication tween.
     """
-    # Merge env-based settings so templates can use them if needed
+
     settings = settings or {}
     settings.setdefault("jinja2.directories", "app/templates")
 
+    settings["trusted_proxy_headers"] = [
+        "x-forwarded-proto",
+        "x-forwarded-host",
+        "x-forwarded-port"
+    ]
+
+    settings["pyramid.default_scheme"] = "https"
+
     config = Configurator(settings=settings)
-    config.include("pyramid_jinja2")  # Enable Jinja2 templating
+    config.add_settings({"trusted_proxy_headers": ["x-forwarded-proto", "x-forwarded-host", "x-forwarded-port"]})
 
-    # Routes
-    config.add_route("home", "/")
-    config.add_route("list", "/submissions")
-    config.add_route("edit", "/edit/{_id}")
+    config.add_request_method(
+        lambda req: req.headers.get("X-Forwarded-Proto", req.scheme),
+        "real_scheme",
+        reify=True,
+    )
 
-    # Scan views module for @view_config
+    config.include("pyramid_jinja2")
+    config.add_tween("app.pyramid_auth.auth_tween_factory")
+
+    # Application routes
+    config.add_route("home", "/app")
+    config.add_route("home_slash", "/app/")
+    config.add_route("list", "/app/submissions")
+    config.add_route("edit", "/app/edit/{_id}")
+    config.add_route("whoami", "/app/_debug/whoami")
+    config.add_route("admin", "/app/admin")
+    config.add_route("export_csv", "/app/admin/export")
+
+    config.add_request_method(lambda r: getattr(r, "niu", None), "niu", reify=True)
+
+    # Scan for @view_config declarations in the views module
     config.scan("app.views")
 
     return config.make_wsgi_app()

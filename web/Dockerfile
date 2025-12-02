@@ -1,23 +1,34 @@
-# Use a slim Python base
+# Use a slim Python base (Debian-based)
 FROM python:3.12-slim
 
-# Create working directory
+# Install nginx, php-fpm, supervisor, build tools (for pip wheels)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx php-fpm php-curl php-xml supervisor php-mbstring build-essential ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# Working directory
 WORKDIR /app
 
-# Install system deps (optional but nice to have for pip wheels)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install Python requirements
-COPY requirements.txt .
+# Copy Python dependencies (from web/)
+COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app
-COPY app/ ./app
+# Copy Pyramid application (from web/)
+COPY web/app ./app
 
-# Expose port
-EXPOSE 8000
+# Copy Nginx and Supervisor configs (from project root)
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Run with Waitress
-CMD ["python", "-m", "app.__main__"]
+# Copy PHP application (from project root)
+COPY php/ /var/www/
+
+# Redirect nginx logs to Docker stdout/stderr
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+ && ln -sf /dev/stderr /var/log/nginx/error.log
+
+# Expose only 8443 (nginx)
+EXPOSE 8443
+
+# Start supervisor (runs nginx + php-fpm + Pyramid)
+CMD ["/usr/bin/supervisord","-c","/etc/supervisor/conf.d/supervisord.conf"]
